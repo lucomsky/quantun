@@ -6,13 +6,13 @@ Simplify safe donations
 ## Самый быстрый и простой анонимный путь
 
 ```
-RUB -> Telegram Wallet -> P2P BTC/TON/USDT -> XMR -> пожертвование
+RUB -> Telegram Wallet P2P BTC/TON/USDT -> Localmonero.co XMR -> пожертвование
 ```
 
 # Решение 1: localmonero.co для RUB
 
 ```
-RUB -> XMR -> пожертвование
+RUB -> QunTun XMR -> пожертвование
 ```
 
 (другая версия этой идеи а-ля Bisq 2, но сразу из RUB в XMR)
