@@ -1,4 +1,10 @@
-@startuml
+Схема уведомлений о времени следующего доната
+
+![](sell_food.svg)
+<details>
+
+```
+@startuml sell_food
 actor       Seller       as usr
 participant      "Sell food bot"      as gfb
 database    "Active sellers list"    as fdb
@@ -22,3 +28,6 @@ note right
 В один момент времени у продавца может быть открыта только 1 заявка.
 end note
 @enduml
+```
+
+</details>
