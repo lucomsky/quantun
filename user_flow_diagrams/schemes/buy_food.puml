@@ -1,5 +1,0 @@
-@startuml
-
-Food -> Cat: Eat!
-
-@enduml

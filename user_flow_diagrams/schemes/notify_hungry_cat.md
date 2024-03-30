@@ -1,4 +1,10 @@
-@startuml
+Схема уведомлений о времени следующего доната
+
+![](notify_hungry_cat.svg)
+<details>
+
+```
+@startuml notify_hungry_cat
 actor       User       as usr
 participant      "Info bot"      as ifb
 database    "Food schedule"    as fdb
@@ -14,3 +20,6 @@ ifb -> usr: Отправить уведомление с кнопкой\nна с
 usr -> ifb: Пользователь нажимает на кнопку отправки
 ifb -> pbt: Переход в процесс покупки корма
 @enduml
+```
+
+</details>

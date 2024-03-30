@@ -1,4 +1,4 @@
-Buy food scheme. 
+Схема покупки корма для конечного пользователя
 
 ![](buy_food.svg)
 <details>
@@ -55,5 +55,3 @@ bb -> bb: Самоочистка и удаление.
 ```
 
 </details>
-
-Some more markdown.

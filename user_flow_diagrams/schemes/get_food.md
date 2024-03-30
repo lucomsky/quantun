@@ -1,4 +1,10 @@
-@startuml
+Схема получения корма для иноагента
+
+![](get_food.svg)
+<details>
+
+```
+@startuml get_food
 participant      "Публичные ресурсы"      as p_res
 actor       Иноагент       as usr
 participant      "Get food bot"      as gfb
@@ -12,3 +18,6 @@ gfb <-> fdb: Создание ассоциации xmr и id
 usr <-- gfb: Уникальный идентификатор запроса для донатов
 p_res <- usr: Размещение кнопки "Покормить котиков" или\nуникального идентификатора в соц.сетях
 @enduml
+```
+
+</details>
