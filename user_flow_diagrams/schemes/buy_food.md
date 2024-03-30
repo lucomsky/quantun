@@ -1,13 +1,14 @@
 Buy food scheme. 
 
-<div hidden>
+![[buy_food.svg]]
+<details>
+
 ```
 @startuml buy_food
 Food -> Cat: Eat!
 @enduml
 ```
-</div>
 
-![](buy_food.svg)
+</details>
 
 Some more markdown.
