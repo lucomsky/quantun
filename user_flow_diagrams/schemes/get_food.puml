@@ -1,6 +1,6 @@
 @startuml
 participant      "Публичные ресурсы"      as p_res
-actor       Inagent       as usr
+actor       Иноагент       as usr
 participant      "Get food bot"      as gfb
 database    "Food list"    as fdb
 
