@@ -1,6 +1,6 @@
 Buy food scheme. 
 
-![[buy_food.svg]]
+![](buy_food.svg)
 <details>
 
 ```
