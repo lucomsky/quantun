@@ -59,6 +59,29 @@ food_service = FoodService()
 seller_service = SellerListService()
 
 
+class MessageService:
+    # TODO Working only for one active session!
+    def __init__(self):
+        self._message_list = []
+
+    async def answer_message(self, message: Message, text: str, **kwargs):
+        answer_message = await message.answer(text, **kwargs)
+        self._message_list.append(answer_message)
+
+    async def delete_messages(self):
+        for message in self._message_list:
+            try:
+                await message.delete()
+            except Exception:  #TODO only expired messages
+                pass
+
+    def add_user_message(self, message: Message):
+        self._message_list.append(message)
+
+
+message_service = MessageService()
+
+
 class BuyState(StatesGroup):
     INPUT_TOKEN = State()
     INPUT_AMOUNT = State()
@@ -76,104 +99,115 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
         return
 
     await state.clear()
-    await message.answer(
-        "Отменено, для начала напишите /start",
-        reply_markup=ReplyKeyboardRemove(),
-    )
+    await message_service.answer_message(message,
+                                         "Отменено, для начала напишите /start",
+                                         reply_markup=ReplyKeyboardRemove(),
+                                         )
 
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, state: FSMContext) -> None:
-    await message.answer(f"Привет! Пришли мне токен полученный от котика", reply_markup=ReplyKeyboardRemove())
+    message_service.add_user_message(message)
+    await message_service.answer_message(message, f"Привет! Пришли мне токен полученный от котика",
+                                         reply_markup=ReplyKeyboardRemove())
     await state.set_state(BuyState.INPUT_TOKEN)
 
 
 @dp.message(BuyState.INPUT_TOKEN)
 async def input_token_handler(message: Message, state: FSMContext) -> None:
+    message_service.add_user_message(message)
     await state.update_data(token=message.text)
-    await message.answer("Токен получен, валидация что токен активен")
+    await message_service.answer_message(message, "Токен получен, валидация что токен активен")
     is_valid_token = await food_service.validate_token(token=message.text)
     if not is_valid_token:
-        await message.answer("Токен не активен, пожалуйста проверьте токен и начните снова")
+        await message_service.answer_message(message, "Токен не активен, пожалуйста проверьте токен и начните снова")
         await state.clear()
         return
-    await message.answer("Токен верен")
-    await message.answer("Введите желаемую сумму")
+    await message_service.answer_message(message, "Токен верен")
+    await message_service.answer_message(message, "Введите желаемую сумму")
     await state.set_state(BuyState.INPUT_AMOUNT)
 
 
 @dp.message(BuyState.INPUT_AMOUNT)
 async def input_amount_handler(message: Message, state: FSMContext) -> None:
+    message_service.add_user_message(message)
     await state.update_data(amount=message.text)
-    await message.answer(f"Вы хотите отправить {message.text}")
-    await message.answer(f"Ищу лучшее предложение из доступных")
+    await message_service.answer_message(message, f"Вы хотите отправить {message.text}")
+    await message_service.answer_message(message, f"Ищу лучшее предложение из доступных")
     deal = await seller_service.get_best_deal(message.text)
-    await message.answer("Найдено предложение для вас:")
-    await message.answer(pprint.pformat(deal),
-                         reply_markup=ReplyKeyboardMarkup(
-                             keyboard=[
-                                 [
-                                     KeyboardButton(text="Да")
-                                 ]
-                             ],
-                             resize_keyboard=True,
-                         ),
-                         )
+    await message_service.answer_message(message, "Найдено предложение для вас:")
+    await message_service.answer_message(message, pprint.pformat(deal),
+                                         reply_markup=ReplyKeyboardMarkup(
+                                             keyboard=[
+                                                 [
+                                                     KeyboardButton(text="Да")
+                                                 ]
+                                             ],
+                                             resize_keyboard=True,
+                                         ),
+                                         )
     await state.set_state(BuyState.VALIDATE_SELLER)
     await state.update_data(seller_id=deal.id)
 
 
 @dp.message(BuyState.VALIDATE_SELLER)
 async def input_amount_handler(message: Message, state: FSMContext) -> None:
-    await message.answer("Отлично! Вы выбрали этого продавца!", reply_markup=ReplyKeyboardRemove())
-    await message.answer("Ожидаю ответа от продавца корма")
+    message_service.add_user_message(message)
+    await message_service.answer_message(message, "Отлично! Вы выбрали этого продавца!",
+                                         reply_markup=ReplyKeyboardRemove())
+    await message_service.answer_message(message, "Ожидаю ответа от продавца корма")
     is_seller_available = await seller_service.notify_seller((await state.get_data())["seller_id"])
     if not is_seller_available:
-        await message.answer("Продавец не ответил. Начните сначала. ")
+        await message_service.answer_message(message, "Продавец не ответил. Начните сначала. ")
         await state.clear()
         return
 
-    await message.answer("Продавец подтвердил сделку")
+    await message_service.answer_message(message, "Продавец подтвердил сделку")
     account = await seller_service.get_seller_account((await state.get_data())["seller_id"])
-    await message.answer("Переведите сумму по указанным реквизитам")
-    await message.answer(pprint.pformat(account),
-                         reply_markup=ReplyKeyboardMarkup(
-                             keyboard=[
-                                 [
-                                     KeyboardButton(text="Готово")
-                                 ]
-                             ],
-                             resize_keyboard=True,
-                         ),
-                         )
+    await message_service.answer_message(message, "Переведите сумму по указанным реквизитам")
+    await message_service.answer_message(message, pprint.pformat(account),
+                                         reply_markup=ReplyKeyboardMarkup(
+                                             keyboard=[
+                                                 [
+                                                     KeyboardButton(text="Готово")
+                                                 ]
+                                             ],
+                                             resize_keyboard=True,
+                                         ),
+                                         )
     await state.set_state(BuyState.MONEY_TRANSFER)
 
 
 @dp.message(BuyState.MONEY_TRANSFER, F.text.casefold() == "готово")
 async def input_money_handler(message: Message, state: FSMContext) -> None:
-    await message.answer("Ожидание перевода со стороны продавца", reply_markup=ReplyKeyboardRemove())
+    message_service.add_user_message(message)
+    await message_service.answer_message(message, "Ожидание перевода со стороны продавца",
+                                         reply_markup=ReplyKeyboardRemove())
     await seller_service.perform_deal()
 
-    await message.answer("Деньги получены! Котик будет накормлен!")
-    await message.answer("Вы хотите получить напоминание через месяц?",
-                         reply_markup=ReplyKeyboardMarkup(
-                             keyboard=[
-                                 [
-                                     KeyboardButton(text="Да!"),
-                                     KeyboardButton(text="Нет (")
-                                 ]
-                             ],
-                             resize_keyboard=True,
-                         )
-                         )
+    await message_service.answer_message(message, "Деньги получены! Котик будет накормлен!")
+    await message_service.answer_message(message, "Вы хотите получить напоминание через месяц?",
+                                         reply_markup=ReplyKeyboardMarkup(
+                                             keyboard=[
+                                                 [
+                                                     KeyboardButton(text="Да!"),
+                                                     KeyboardButton(text="Нет (")
+                                                 ]
+                                             ],
+                                             resize_keyboard=True,
+                                         )
+                                         )
     await state.set_state(BuyState.SUCCESS)
 
 
 @dp.message(BuyState.SUCCESS)
 async def input_success_handler(message: Message, state: FSMContext) -> None:
-    await message.answer("Договорились!")
-    await message.answer("Удаляюсь!")
-    await message.answer("Для безопасности сами удалите этот диалог из своей истории!")
+    message_service.add_user_message(message)
+    await message_service.answer_message(message, "Договорились!", reply_markup=ReplyKeyboardRemove())
+    await message_service.answer_message(message, "Удаляюсь!")
+    await message_service.answer_message(message, "Для безопасности сами удалите этот диалог из своей истории!")
+    await asyncio.sleep(10)
+    await message_service.delete_messages()
     await state.clear()
 
 
