@@ -21,7 +21,7 @@ class FoodService:
 
     async def validate_token(self, token: str) -> bool:
         # TODO mocked token validation
-        if token == 'e4235c68-54b7-4bc6-b854-31effd76b5c8':
+        if token == 'kitty-newyork13-caesar197-mustard10':
             return True
         return False
 
@@ -33,10 +33,22 @@ class DealDTO(BaseModel):
     description: str
     amount: int
 
+    def __str__(self):
+        return f"Описание: {self.description} \nРейтинг: {self.rating} \nЦена: {self.price}"
+
+    def __repr__(self):
+        return f"Описание: {self.description} \nРейтинг: {self.rating} \nЦена: {self.price}"
+
 
 class AccountDTO(BaseModel):
     account: str
     description: str
+
+    def __str__(self):
+        return f"Счет: {self.account} \nСпособ перевода: {self.description}"
+
+    def __repr__(self):
+        return f"Счет: {self.account} \nСпособ перевода: {self.description}"
 
 
 class SellerListService:
@@ -94,6 +106,7 @@ class BuyState(StatesGroup):
 @dp.message(F.text.casefold() == "cancel")
 @dp.message(F.text.casefold() == "отмена")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
+    message_service.add_user_message(message)
     current_state = await state.get_state()
     if current_state is None:
         return
@@ -103,12 +116,13 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
                                          "Отменено, для начала напишите /start",
                                          reply_markup=ReplyKeyboardRemove(),
                                          )
+    await message_service.delete_messages()
 
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message, state: FSMContext) -> None:
     message_service.add_user_message(message)
-    await message_service.answer_message(message, f"Привет! Пришли мне токен полученный от котика",
+    await message_service.answer_message(message, f"Привет! Пришли мне имя котика",
                                          reply_markup=ReplyKeyboardRemove())
     await state.set_state(BuyState.INPUT_TOKEN)
 
@@ -117,14 +131,14 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
 async def input_token_handler(message: Message, state: FSMContext) -> None:
     message_service.add_user_message(message)
     await state.update_data(token=message.text)
-    await message_service.answer_message(message, "Токен получен, валидация что токен активен")
+    await message_service.answer_message(message, "Имя получено, валидация что котик хочет есть")
     is_valid_token = await food_service.validate_token(token=message.text)
     if not is_valid_token:
-        await message_service.answer_message(message, "Токен не активен, пожалуйста проверьте токен и начните снова")
+        await message_service.answer_message(message, "Этот котик не голоден")
         await state.clear()
         return
-    await message_service.answer_message(message, "Токен верен")
-    await message_service.answer_message(message, "Введите желаемую сумму")
+    await message_service.answer_message(message, "Котик голоден")
+    await message_service.answer_message(message, "Введите желаемую сумму покупки корма")
     await state.set_state(BuyState.INPUT_AMOUNT)
 
 
@@ -185,7 +199,7 @@ async def input_money_handler(message: Message, state: FSMContext) -> None:
                                          reply_markup=ReplyKeyboardRemove())
     await seller_service.perform_deal()
 
-    await message_service.answer_message(message, "Деньги получены! Котик будет накормлен!")
+    await message_service.answer_message(message, "Ура! Котик будет накормлен!")
     await message_service.answer_message(message, "Вы хотите получить напоминание через месяц?",
                                          reply_markup=ReplyKeyboardMarkup(
                                              keyboard=[
